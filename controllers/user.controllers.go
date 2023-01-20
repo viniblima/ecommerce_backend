@@ -62,14 +62,14 @@ func SignIn(c *fiber.Ctx) error {
 	// })
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"token":      s,
-		"expires_in": time.Now().Add(7 * 24 * time.Hour),
-		"user": fiber.Map{
-			"id":        user.ID,
-			"createdAt": user.CreatedAt,
-			"updatedAt": user.UpdatedAt,
-			"name":      user.Name,
-			"email":     user.Email,
+		"Token":     s,
+		"ExpiresIn": time.Now().Add(7 * 24 * time.Hour),
+		"User": fiber.Map{
+			"ID":        user.ID,
+			"CreatedAt": user.CreatedAt,
+			"UpdatedAt": user.UpdatedAt,
+			"Name":      user.Name,
+			"Email":     user.Email,
 		},
 	})
 }
@@ -113,10 +113,10 @@ func SignUp(c *fiber.Ctx) error {
 	database.DB.Db.Create(&user)
 
 	return c.Status(201).JSON(fiber.Map{
-		"id":        user.ID,
-		"createdAt": user.CreatedAt,
-		"updatedAt": user.UpdatedAt,
-		"name":      user.Name,
-		"email":     user.Email,
+		"ID":        user.ID,
+		"CreatedAt": user.CreatedAt,
+		"UpdatedAt": user.UpdatedAt,
+		"Name":      user.Name,
+		"Email":     user.Email,
 	})
 }

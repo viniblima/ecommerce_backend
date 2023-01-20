@@ -18,4 +18,5 @@ func setupV1Routes(api fiber.Router) {
 
 	routes.SetupUserRoutes(v1)
 	routes.SetupProductsRoutes(v1)
+	routes.SetupCategoryRoutes(v1)
 }
