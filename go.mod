@@ -9,6 +9,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/cactus/go-misc v1.0.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
@@ -25,6 +26,8 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/paketo-buildpacks/packit/v2 v2.8.0 // indirect
+	github.com/procyon-projects/chrono v1.1.2
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

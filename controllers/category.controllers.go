@@ -21,7 +21,7 @@ func CreateCategory(c *fiber.Ctx) error {
 	category := new(models.Category)
 
 	if err := c.BodyParser(category); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}

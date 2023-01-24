@@ -15,12 +15,18 @@ func GetHighlights(c *fiber.Ctx) error {
 	})
 }
 
+func GetAllProducts(c *fiber.Ctx) error {
+
+	products := handlers.GetAllProducts()
+	return c.Status(fiber.StatusOK).JSON(products)
+}
+
 func CreateProduct(c *fiber.Ctx) error {
 	var input models.Product
 	product := new(models.Product)
 
 	if err := c.BodyParser(product); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}

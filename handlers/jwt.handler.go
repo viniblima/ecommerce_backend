@@ -36,7 +36,7 @@ func VerifyJWT(c *fiber.Ctx) error {
 	auth := c.GetReqHeaders()["Authorization"]
 	if auth != "" {
 
-		token, err := jwt.ParseWithClaims(strings.Split(auth, "JWT ")[1], &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		_, err := jwt.ParseWithClaims(strings.Split(auth, "JWT ")[1], &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 			_, ok := token.Method.(*jwt.SigningMethodECDSA)
 			if !ok {
 				fmt.Println("unauthorized")
@@ -50,7 +50,7 @@ func VerifyJWT(c *fiber.Ctx) error {
 			})
 
 		}
-		fmt.Println(token)
+
 	} else {
 		return c.SendStatus(401)
 	}

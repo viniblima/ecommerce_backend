@@ -13,18 +13,8 @@ import (
 	"github.com/viniblima/go_pq/util"
 )
 
-type Log struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 func SignIn(c *fiber.Ctx) error {
 	var input models.User
-
-	type Log struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
 
 	err := c.BodyParser(&input)
 	if err != nil {
@@ -51,7 +41,7 @@ func SignIn(c *fiber.Ctx) error {
 
 	if err != nil {
 		fmt.Println(err.Error())
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return c.SendStatus(fiber.StatusForbidden)
 	}
 	// c.Cookie(&fiber.Cookie{
 	// 	Name:     "jwt",
@@ -79,7 +69,7 @@ func SignUp(c *fiber.Ctx) error {
 	var input models.User
 	user := new(models.User)
 	if err := c.BodyParser(user); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}
