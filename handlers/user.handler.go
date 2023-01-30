@@ -37,6 +37,13 @@ func (u *User) FindUserByEmail(email string) (*User, error) {
 
 func GetByEmail(email string) *gorm.DB {
 	item := models.User{}
-	//return database.DB.Db.Find(&item, "email = ?", email).First()
 	return database.DB.Db.Where("email = ?", email).First(item)
+}
+
+func GetUserByID(id string) models.User {
+	item := models.User{}
+
+	database.DB.Db.Where("id = ?", id).First(&item)
+
+	return item
 }

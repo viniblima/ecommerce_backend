@@ -34,9 +34,10 @@ func GenerateJWT(id string) (string, error) {
 
 func VerifyJWT(c *fiber.Ctx) error {
 	auth := c.GetReqHeaders()["Authorization"]
+	claims := jwt.MapClaims{}
 	if auth != "" {
 
-		_, err := jwt.ParseWithClaims(strings.Split(auth, "JWT ")[1], &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		_, err := jwt.ParseWithClaims(strings.Split(auth, "JWT ")[1], claims, func(token *jwt.Token) (interface{}, error) {
 			_, ok := token.Method.(*jwt.SigningMethodECDSA)
 			if !ok {
 				fmt.Println("unauthorized")
@@ -54,5 +55,7 @@ func VerifyJWT(c *fiber.Ctx) error {
 	} else {
 		return c.SendStatus(401)
 	}
+
+	c.Locals("userID", claims["id"])
 	return c.Next()
 }
