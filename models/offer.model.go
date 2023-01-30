@@ -9,12 +9,13 @@ import (
 
 type Offer struct {
 	gorm.Model
-	ID       string `sql:"type:uuid;primary_key;"`
-	EndTime  time.Time
-	Products []Product `gorm:"many2many:id"`
+	ID        string     `sql:"type:uuid;primary_key;"`
+	EndTime   time.Time  `validate:"required"`
+	Discounts []Discount `gorm:"many2many:offer_discounts"`
 }
 
 func (offer *Offer) BeforeCreate(db *gorm.DB) (err error) {
+
 	newId := uuid.NewV4().String()
 	offer.ID = newId
 	return

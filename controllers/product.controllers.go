@@ -1,8 +1,8 @@
 package controllers
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/viniblima/go_pq/database"
 	"github.com/viniblima/go_pq/handlers"
 	"github.com/viniblima/go_pq/models"
 )
@@ -23,6 +23,7 @@ func GetAllProducts(c *fiber.Ctx) error {
 
 func CreateProduct(c *fiber.Ctx) error {
 	var input models.Product
+	validate := validator.New()
 	product := new(models.Product)
 
 	if err := c.BodyParser(product); err != nil {
@@ -31,8 +32,22 @@ func CreateProduct(c *fiber.Ctx) error {
 		})
 	}
 	c.BodyParser(&input)
+	var errors []string
 
-	database.DB.Db.Create(&product)
+	if err := validate.Struct(product); err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+		for _, validationError := range validationErrors {
+			errors = append(errors, validationError.Error())
+		}
+	}
+
+	if len(errors) > 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": errors[0],
+		})
+	}
+
+	handlers.CreateProduct(product)
 
 	return c.Status(201).JSON(product)
 }
