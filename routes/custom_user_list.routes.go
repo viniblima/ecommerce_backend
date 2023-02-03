@@ -11,4 +11,6 @@ func SetupCustomUserListRoutes(api fiber.Router) {
 
 	list_routes.Post("", controllers.CreateCustomUserList)
 	list_routes.Get("", controllers.GetMyLists)
+	list_routes.Post("/add_product", controllers.AddProductToList)
+
 }

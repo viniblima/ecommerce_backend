@@ -13,8 +13,6 @@ type Product struct {
 	Quantity                int     `validate:"required"`
 	MaxQuantityInstallments int     `validate:"required,min=1"`
 	Highlight               bool
-	// CategoriesID            []uint
-	// Categories              []Category `gorm:"foreignKey: CategoriesID"`
 }
 
 func (p *Product) BeforeCreate(db *gorm.DB) (err error) {

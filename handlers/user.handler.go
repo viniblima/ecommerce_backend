@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+
 	"github.com/viniblima/go_pq/database"
 	"github.com/viniblima/go_pq/models"
 	"golang.org/x/crypto/bcrypt"
@@ -40,10 +42,13 @@ func GetByEmail(email string) *gorm.DB {
 	return database.DB.Db.Where("email = ?", email).First(item)
 }
 
-func GetUserByID(id string) models.User {
+func GetUserByID(id string) (models.User, error) {
 	item := models.User{}
+	var err error
+	dbResult := database.DB.Db.Where("id = ?", id).Take(&item)
 
-	database.DB.Db.Where("id = ?", id).First(&item)
-
-	return item
+	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
+		err = errors.New("user not found")
+	}
+	return item, err
 }

@@ -7,9 +7,10 @@ import (
 
 type Discount struct {
 	gorm.Model
-	ID        string `sql:"type:uuid;primary_key;"`
-	ProductID string
-	Product   Product `gorm:"foreignKey: ProductID"`
+	ID         string `sql:"type:uuid;primary_key;"`
+	DiscountID string
+	ProductID  string
+	Product    Product `gorm:"foreignKey: ProductID"`
 
 	PriceWithDiscount float64 `validate:"required"`
 	PercentDiscount   float64 `validate:"required"`
@@ -23,5 +24,6 @@ type DiscountsJson struct {
 func (d *Discount) BeforeCreate(db *gorm.DB) (err error) {
 	newId := uuid.NewV4().String()
 	d.ID = newId
+	d.DiscountID = newId
 	return
 }
