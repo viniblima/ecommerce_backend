@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 
 	"github.com/viniblima/go_pq/database"
 	"github.com/viniblima/go_pq/models"
@@ -21,9 +23,25 @@ func GetHighlights() []models.Product {
 	return products
 }
 
-func GetAllProducts() []map[string]interface{} {
+func GetAllProducts(page string) map[string]interface{} {
 	var products []models.Product
-	database.DB.Db.Find(&products)
+
+	if page == "" {
+		page = "1"
+	}
+	offset := 10
+	limit := 10
+
+	int, errOffeset := strconv.Atoi(page)
+
+	if errOffeset == nil {
+		offset = (int - 1) * offset
+	}
+
+	fmt.Println("offset")
+	fmt.Println(offset)
+
+	database.DB.Db.Offset(offset - 1).Limit(limit).Find(&products)
 	var list []map[string]interface{}
 	for i := 0; i < len(products); i++ {
 		product := products[i]
@@ -46,7 +64,12 @@ func GetAllProducts() []map[string]interface{} {
 
 		list = append(list, l)
 	}
-	return list
+
+	newMap := map[string]interface{}{
+		"End":      len(list) < 10,
+		"Products": list,
+	}
+	return newMap
 }
 
 func GetProductByID(id string) (models.Product, error) {

@@ -17,7 +17,7 @@ func GetHighlights(c *fiber.Ctx) error {
 
 func GetAllProducts(c *fiber.Ctx) error {
 
-	products := handlers.GetAllProducts()
+	products := handlers.GetAllProducts(c.Query("page"))
 	return c.Status(fiber.StatusOK).JSON(products)
 }
 
