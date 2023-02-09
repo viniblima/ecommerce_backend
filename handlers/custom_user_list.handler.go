@@ -23,15 +23,16 @@ func GetMyLists(id string) []map[string]interface{} {
 		//relations := GetRelationsByListID(list[i].ID)
 		var relations []models.CustomUserListProducts
 		database.DB.Db.Where("custom_user_list_id = ?", list[i].ID).Find(&relations)
-		fmt.Println("tamanho das relacoes")
-		fmt.Println(len(relations))
+
 		var products []models.Product
+
+		fmt.Println("len relations")
 		fmt.Println(len(relations))
 		for j := 0; j < len(relations); j++ {
 
 			product, err := GetProductByID(relations[j].ProductID)
 
-			if err != nil {
+			if err == nil {
 				products = append(products, product)
 			}
 

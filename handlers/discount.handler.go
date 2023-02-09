@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"math"
 
 	"github.com/viniblima/go_pq/database"
@@ -49,25 +48,22 @@ func DeleteDiscount(discountID string, productID string) models.Discount {
 
 	var offerProduct models.OfferProduct
 
-	fmt.Println("Delete1")
 	dbResult := database.DB.Db.Where("discount_id = ?", discountID).Delete(&relation)
 
 	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
-		fmt.Println("not found 1")
+
 	}
 
-	fmt.Println("Delete3")
 	dbResult = database.DB.Db.Where("product_id = ?", productID).Delete(&offerProduct)
 
 	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
-		fmt.Println("not found 3")
+
 	}
 
-	fmt.Println("Delete2")
 	dbResult = database.DB.Db.Where("id = ?", discountID).Delete(&discount)
 
 	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
-		fmt.Println("not found 2")
+
 	}
 
 	return discount
@@ -94,9 +90,9 @@ func CreateDiscountLists(offerID string, ps []models.ItemDiscount) []map[string]
 	var products []map[string]interface{}
 
 	for i := 0; i < len(ps); i++ {
-		fmt.Println("teste")
+
 		//var discount models.Discount
-		fmt.Println(ps[i].ID)
+
 		product, err := GetProductByID(ps[i].ID)
 
 		foundProduct := false
@@ -108,11 +104,10 @@ func CreateDiscountLists(offerID string, ps []models.ItemDiscount) []map[string]
 		}
 
 		if err == nil {
-			fmt.Println("1")
-			fmt.Println(product.Name)
+
 			actualDiscount, errActualDiscount := GetDiscountbyProductID(product.ID)
 			if errActualDiscount == nil || foundProduct {
-				fmt.Println("2")
+
 				DeleteDiscount(actualDiscount.ID, product.ID)
 			}
 			newOfferRelation := new(models.OfferProduct)
@@ -123,8 +118,14 @@ func CreateDiscountLists(offerID string, ps []models.ItemDiscount) []map[string]
 			database.DB.Db.Create(&newOfferRelation)
 
 			newDiscount := new(models.Discount)
-			newDiscount.PercentDiscount = roundFloat(ps[i].Percent, 2)
-			newDiscount.PriceWithDiscount = roundFloat(float64(product.Price)*(1-ps[i].Percent), 2)
+
+			percent := ps[i].Percent
+
+			if percent > 1.0 {
+				percent = 1.0
+			}
+			newDiscount.PercentDiscount = roundFloat(percent, 2)
+			newDiscount.PriceWithDiscount = roundFloat(float64(product.Price)*(1-percent), 2)
 
 			database.DB.Db.Create(&newDiscount)
 

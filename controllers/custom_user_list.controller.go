@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	// "fmt"
-
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,7 +20,7 @@ func CreateCustomUserList(c *fiber.Ctx) error {
 			})
 		}
 		list.UserID = result.ID
-		fmt.Println(list.UserID)
+
 	} else {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "User not found",
@@ -78,13 +76,13 @@ func GetMyLists(c *fiber.Ctx) error {
 
 func GetRelations(c *fiber.Ctx) error {
 	if str, ok := c.Locals("userID").(string); ok {
-		result, err := handlers.GetUserByID(str)
+		_, err := handlers.GetUserByID(str)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"message": "User not found",
 			})
 		}
-		fmt.Println(result)
+
 		lists := handlers.GetAllRelationsProductUserList()
 		return c.Status(200).JSON(lists)
 	} else {
@@ -119,11 +117,14 @@ func AddProductToList(c *fiber.Ctx) error {
 		})
 	}
 	var products []models.Product
+
+	fmt.Println("len relations")
+	fmt.Println(len(payload.Products))
 	for i := 0; i < len(payload.Products); i++ {
 		id := payload.Products[i].ID
 		product, err := handlers.GetProductByID(id)
 
-		if err != nil {
+		if err == nil {
 			products = append(products, product)
 		}
 
@@ -137,7 +138,7 @@ func AddProductToList(c *fiber.Ctx) error {
 			"message": "List not found",
 		})
 	}
-	// fmt.Println(err)
+	//
 
 	return c.Status(fiber.StatusOK).JSON(list)
 }

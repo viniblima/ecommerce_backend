@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/viniblima/go_pq/database"
@@ -31,7 +30,6 @@ func GetAllOffers() []map[string]interface{} {
 
 			relation := relations[j]
 
-			fmt.Println(relation.ProductID)
 			product, err := GetProductByID(relation.ProductID)
 
 			if err == nil {
@@ -63,8 +61,6 @@ func GetAllOffers() []map[string]interface{} {
 				"Products":  rlMap,
 			},
 		}
-		fmt.Println(l["Products"])
-		fmt.Println(len(rlMap))
 
 		list = append(list, l)
 

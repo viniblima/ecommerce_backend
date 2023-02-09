@@ -48,24 +48,23 @@ func AddProductToList(id string, ps []models.Product) (map[string]interface{}, e
 	if err != nil {
 		err = errors.New("List not found")
 		data := map[string]interface{}{}
+		fmt.Println("List not found")
 		return data, err
 	}
 
+	fmt.Println(len(ps))
+	fmt.Println("len(ps)")
 	for i := 0; i < len(ps); i++ {
 		p := ps[i]
 		result, err := GetRelationProductUserList(id, p.ID)
-		fmt.Println("result")
-		fmt.Println(result.ProductID)
-		fmt.Println("err")
-		fmt.Println(err)
+
 		if err != nil {
 			//CreateRelationProductUserList(id, p.ID)
 			product := CreateRelationProductUserList(id, p.ID)
-			fmt.Println("Criou")
 
 			relations = append(relations, product)
 		} else {
-			fmt.Println("Só achou")
+
 			relations = append(relations, result)
 		}
 	}

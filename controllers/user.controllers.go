@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -33,14 +32,12 @@ func SignIn(c *fiber.Ctx) error {
 	checked := handlers.CheckHash(user.Password, password)
 
 	if error != nil || !checked {
-		fmt.Println(err)
 		return c.Status(401).SendString("Email or password wrong")
 	}
 
 	s, err := handlers.GenerateJWT(user.ID)
 
 	if err != nil {
-		fmt.Println(err.Error())
 		return c.SendStatus(fiber.StatusForbidden)
 	}
 	// c.Cookie(&fiber.Cookie{
