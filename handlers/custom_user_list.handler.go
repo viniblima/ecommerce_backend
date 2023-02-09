@@ -28,7 +28,13 @@ func GetMyLists(id string) []map[string]interface{} {
 		var products []models.Product
 		fmt.Println(len(relations))
 		for j := 0; j < len(relations); j++ {
-			products = append(products, GetProductByID(relations[j].ProductID))
+
+			product, err := GetProductByID(relations[j].ProductID)
+
+			if err != nil {
+				products = append(products, product)
+			}
+
 		}
 		local := map[string]interface{}{
 			"CustomUserList": list[i],

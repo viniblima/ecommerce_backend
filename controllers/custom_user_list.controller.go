@@ -118,9 +118,12 @@ func AddProductToList(c *fiber.Ctx) error {
 	var products []models.Product
 	for i := 0; i < len(payload.Products); i++ {
 		id := payload.Products[i].ID
-		product := handlers.GetProductByID(id)
+		product, err := handlers.GetProductByID(id)
 
-		products = append(products, product)
+		if err != nil {
+			products = append(products, product)
+		}
+
 	}
 
 	//var list models.CustomUserList

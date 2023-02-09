@@ -11,4 +11,6 @@ func SetupOfferRoutes(api fiber.Router) {
 
 	offer_routes.Post("/", controllers.CreateOffer)
 	offer_routes.Get("/", controllers.GetAllOffers)
+	offer_routes.Get("/discounts", controllers.GetAllDiscounts)
+	offer_routes.Get("/discounts_relations", controllers.GetAllDiscountsProducts)
 }

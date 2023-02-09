@@ -10,14 +10,9 @@ import (
 	"github.com/viniblima/go_pq/models"
 )
 
-type Payload struct {
-	Discounts []models.DiscountsJson `json:"Discounts"`
-	EndTime   time.Time              `json:"EndTime"`
-}
-
 func CreateOffer(c *fiber.Ctx) error {
 
-	payload := Payload{}
+	payload := models.PayloadDiscount{}
 
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
@@ -26,9 +21,11 @@ func CreateOffer(c *fiber.Ctx) error {
 	}
 	c.BodyParser(&payload)
 
-	discounts := handlers.CreateDiscountLists(payload.Discounts)
+	//
+
 	var input models.Offer
-	input.Discounts = discounts
+	// input.Products = products
+
 	input.EndTime = payload.EndTime
 
 	if time.Now().After(payload.EndTime) {
@@ -54,10 +51,12 @@ func CreateOffer(c *fiber.Ctx) error {
 	}
 	database.DB.Db.Create(&input)
 
+	products := handlers.CreateDiscountLists(input.ID, payload.List)
+
 	return c.Status(201).JSON(fiber.Map{
 		"ID":        input.ID,
 		"EndTime":   input.EndTime,
-		"Discounts": input.Discounts,
+		"Products":  products,
 		"CreatedAt": input.CreatedAt,
 	})
 }
