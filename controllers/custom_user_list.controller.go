@@ -65,6 +65,9 @@ func GetMyLists(c *fiber.Ctx) error {
 		}
 		lists := handlers.GetMyLists(result.ID)
 
+		if lists == nil {
+			lists = make([]map[string]interface{}, 0)
+		}
 		return c.Status(200).JSON(lists)
 	} else {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{

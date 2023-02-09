@@ -51,23 +51,23 @@ func GetAllOffers() []map[string]interface{} {
 				//list = append(list, rl)
 			}
 		}
-
-		l := map[string]interface{}{
-			"Offer":    offer,
-			"Products": relations,
+		if len(rlMap) == 0 {
+			rlMap = make([]map[string]interface{}, 0)
 		}
-		list = append(list, l)
-		// 	offer := offers[i]
-		// 	for j := 0; j < len(offer.Products); j++ {
-		// 		product := offer.Products[j]
-		// 		//p, _ := GetProductByID(discount.ProductID)
+		l := map[string]interface{}{
+			"Offer": map[string]interface{}{
+				"ID":        offer.ID,
+				"CreatedAt": offer.CreatedAt,
+				"UpdatedAt": offer.UpdatedAt,
+				"EndTime":   offer.EndTime,
+				"Products":  rlMap,
+			},
+		}
+		fmt.Println(l["Products"])
+		fmt.Println(len(rlMap))
 
-		// 		ds := map[string]interface{}{
-		// 			"Product": product,
-		// 		}
-		// 		list = append(list, ds)
-		// 		//discount.Product, _ = GetProductByID(discount.ProductID)
-		// 	}
+		list = append(list, l)
+
 	}
 	return list
 }

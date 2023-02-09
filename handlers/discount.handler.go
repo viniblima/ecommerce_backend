@@ -25,14 +25,12 @@ func GetDiscountbyProductID(productID string) (models.Discount, error) {
 
 	resultRelation := database.DB.Db.Where("product_id = ?", productID).Last(&relation)
 
-	fmt.Println("resultRelation")
-	fmt.Println(relation.ID)
 	if errors.Is(resultRelation.Error, gorm.ErrRecordNotFound) {
 		err = errors.New("Discount not found")
 	}
 
 	if err != nil {
-		return discount, nil
+		return discount, err
 	}
 
 	dbResult := database.DB.Db.Where("id = ?", relation.DiscountID).First(&discount)
@@ -44,18 +42,33 @@ func GetDiscountbyProductID(productID string) (models.Discount, error) {
 	return discount, err
 }
 
-func DeleteDiscount(discountID string) models.Discount {
+func DeleteDiscount(discountID string, productID string) models.Discount {
 	var discount models.Discount
 
 	var relation models.ProductDiscount
 
 	var offerProduct models.OfferProduct
 
-	database.DB.Db.Where("discount_id = ?", discountID).Delete(&relation)
+	fmt.Println("Delete1")
+	dbResult := database.DB.Db.Where("discount_id = ?", discountID).Delete(&relation)
 
-	database.DB.Db.Where("id = ?", discountID).Delete(&discount)
+	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
+		fmt.Println("not found 1")
+	}
 
-	database.DB.Db.Where("product_id = ?", relation.ProductID).Delete(&offerProduct)
+	fmt.Println("Delete3")
+	dbResult = database.DB.Db.Where("product_id = ?", productID).Delete(&offerProduct)
+
+	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
+		fmt.Println("not found 3")
+	}
+
+	fmt.Println("Delete2")
+	dbResult = database.DB.Db.Where("id = ?", discountID).Delete(&discount)
+
+	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
+		fmt.Println("not found 2")
+	}
 
 	return discount
 }
@@ -100,7 +113,7 @@ func CreateDiscountLists(offerID string, ps []models.ItemDiscount) []map[string]
 			actualDiscount, errActualDiscount := GetDiscountbyProductID(product.ID)
 			if errActualDiscount == nil || foundProduct {
 				fmt.Println("2")
-				DeleteDiscount(actualDiscount.ID)
+				DeleteDiscount(actualDiscount.ID, product.ID)
 			}
 			newOfferRelation := new(models.OfferProduct)
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/viniblima/go_pq/database"
 	"github.com/viniblima/go_pq/models"
@@ -28,7 +29,8 @@ func GetAllProducts() []map[string]interface{} {
 	for i := 0; i < len(products); i++ {
 		product := products[i]
 
-		ds, _ := GetDiscountbyProductID(product.ID)
+		ds, errDs := GetDiscountbyProductID(product.ID)
+
 		l := map[string]interface{}{
 			"ID":                      product.ID,
 			"Name":                    product.Name,
@@ -38,6 +40,11 @@ func GetAllProducts() []map[string]interface{} {
 			"Highlight":               product.Highlight,
 			"Discount":                ds,
 		}
+
+		if errDs != nil {
+			l["Discount"] = nil
+		}
+		fmt.Println(l["Discount"])
 		list = append(list, l)
 	}
 	return list
