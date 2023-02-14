@@ -7,6 +7,8 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 )
 
+require github.com/reginaldosousa/go-cielo v0.0.0-20160914175452-3265fa864496 // indirect
+
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/cactus/go-misc v1.0.0 // indirect
