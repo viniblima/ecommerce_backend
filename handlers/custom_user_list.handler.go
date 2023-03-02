@@ -13,6 +13,45 @@ func CreateUserList(l *models.CustomUserList) *gorm.DB {
 	return database.DB.Db.Create(&l)
 }
 
+func GetListBydIDAndProductRelations(userID string, listID string) map[string]interface{} {
+	var list models.CustomUserList
+	database.DB.Db.Model(&models.CustomUserList{}).Where("user_id = ? AND id = ?", userID, listID).Find(&list)
+
+	var relations []models.CustomUserListProducts
+
+	database.DB.Db.Where("custom_user_list_id = ?", list.ID).Find(&relations)
+
+	var products []models.Product
+
+	fmt.Println("len relations")
+	fmt.Println(len(relations))
+	for j := 0; j < len(relations); j++ {
+
+		product, err := GetProductByID(relations[j].ProductID)
+
+		if err == nil {
+			products = append(products, product)
+		}
+
+	}
+
+	if products == nil {
+		products = make([]models.Product, 0)
+	}
+
+	local := map[string]interface{}{
+		"CustomUserList": map[string]interface{}{
+			"ID":        list.ID,
+			"CreatedAt": list.CreatedAt,
+			"UpdatedAt": list.UpdatedAt,
+			"Name":      list.Name,
+		},
+		"Products": products,
+	}
+
+	return local
+}
+
 func GetMyLists(id string) []map[string]interface{} {
 	var list []models.CustomUserList
 	var result []map[string]interface{}
@@ -37,9 +76,18 @@ func GetMyLists(id string) []map[string]interface{} {
 			}
 
 		}
+
+		if products == nil {
+			products = make([]models.Product, 0)
+		}
 		local := map[string]interface{}{
-			"CustomUserList": list[i],
-			"Products":       products,
+			"CustomUserList": map[string]interface{}{
+				"ID":        list[i].ID,
+				"CreatedAt": list[i].CreatedAt,
+				"UpdatedAt": list[i].UpdatedAt,
+				"Name":      list[i].Name,
+			},
+			"Products": products,
 		}
 		result = append(result, local)
 	}

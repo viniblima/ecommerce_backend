@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -49,8 +48,7 @@ func SignIn(c *fiber.Ctx) error {
 	// })
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"Token":     s,
-		"ExpiresIn": time.Now().Add(7 * 24 * time.Hour),
+		"Auth": s,
 		"User": fiber.Map{
 			"ID":        user.ID,
 			"CreatedAt": user.CreatedAt,
@@ -99,11 +97,22 @@ func SignUp(c *fiber.Ctx) error {
 
 	database.DB.Db.Create(&user)
 
-	return c.Status(201).JSON(fiber.Map{
-		"ID":        user.ID,
-		"CreatedAt": user.CreatedAt,
-		"UpdatedAt": user.UpdatedAt,
-		"Name":      user.Name,
-		"Email":     user.Email,
-	})
+	s, err := handlers.GenerateJWT(user.ID)
+
+	if err != nil {
+		return c.SendStatus(fiber.StatusForbidden)
+	}
+
+	newMap := map[string]interface{}{
+		"Auth": s,
+		"User": map[string]interface{}{
+			"ID":        user.ID,
+			"CreatedAt": user.CreatedAt,
+			"UpdatedAt": user.UpdatedAt,
+			"Name":      user.Name,
+			"Email":     user.Email,
+		},
+	}
+
+	return c.Status(201).JSON(newMap)
 }

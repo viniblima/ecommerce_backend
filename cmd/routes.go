@@ -17,6 +17,7 @@ func setupV1Routes(api fiber.Router) {
 	v1 := api.Group("/v1")
 
 	routes.SetupUserRoutes(v1)
+	routes.SetupTokenRoutes(v1)
 	routes.SetupProductsRoutes(v1)
 	routes.SetupCategoryRoutes(v1)
 	routes.SetupOfferRoutes(v1)

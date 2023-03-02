@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"math"
 
 	"github.com/viniblima/go_pq/database"
@@ -124,6 +125,8 @@ func CreateDiscountLists(offerID string, ps []models.ItemDiscount) []map[string]
 			if percent > 1.0 {
 				percent = 1.0
 			}
+			fmt.Println(">>>>>>>>")
+			fmt.Println(product.Price)
 			newDiscount.PercentDiscount = roundFloat(percent, 2)
 			newDiscount.PriceWithDiscount = roundFloat(float64(product.Price)*(1-percent), 2)
 

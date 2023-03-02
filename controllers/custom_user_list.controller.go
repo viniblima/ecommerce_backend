@@ -9,7 +9,32 @@ import (
 )
 
 func CreateCustomUserList(c *fiber.Ctx) error {
+
+	type Payload struct {
+		Name     string `json:"Name" validate:"required"`
+		Products []struct {
+			ID string `json:"ID" validate:"required"`
+		} `json:"Products"`
+	}
+
+	payload := Payload{}
+
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	c.BodyParser(&payload)
+
+	errors := handlers.ValidatePayload(payload)
+	if len(errors) > 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": errors[0],
+		})
+	}
+
 	list := new(models.CustomUserList)
+	c.BodyParser(&list)
 
 	if str, ok := c.Locals("userID").(string); ok {
 
@@ -27,29 +52,21 @@ func CreateCustomUserList(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := c.BodyParser(list); err != nil {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-	c.BodyParser(&list)
-
-	errors := handlers.ValidatePayload(list)
-	if len(errors) > 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": errors[0],
-		})
-	}
-
-	if len(errors) > 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": errors[0],
-		})
-	}
-
+	fmt.Println(payload.Products != nil)
 	handlers.CreateUserList(list)
 
-	return c.Status(201).JSON(list)
+	if payload.Products != nil {
+
+		for i := 0; i < len(payload.Products); i++ {
+			p := payload.Products[i]
+
+			handlers.CreateRelationProductUserList(list.ID, p.ID)
+		}
+	}
+
+	result := handlers.GetListBydIDAndProductRelations(list.UserID, list.ID)
+
+	return c.Status(201).JSON(result)
 }
 
 func GetMyLists(c *fiber.Ctx) error {

@@ -7,12 +7,15 @@ services:
       - .env
     ports:
       - "3000:3000"
-
+    stdin_open: true
     expose: 
       - 3000
     volumes:
       - .:/usr/src/app
     command: air ./cmd/main.go -b 0.0.0.0
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   db:
     image: postgres:alpine
     environment:

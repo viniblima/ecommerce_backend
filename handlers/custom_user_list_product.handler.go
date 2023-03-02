@@ -41,7 +41,7 @@ func CreateRelationProductUserList(ListID string, productID string) models.Custo
 }
 
 func AddProductToList(id string, ps []models.Product) (map[string]interface{}, error) {
-	var relations []models.CustomUserListProducts
+	var relations []models.Product
 
 	_, err := GetListByID(id)
 
@@ -56,16 +56,17 @@ func AddProductToList(id string, ps []models.Product) (map[string]interface{}, e
 	fmt.Println("len(ps)")
 	for i := 0; i < len(ps); i++ {
 		p := ps[i]
-		result, err := GetRelationProductUserList(id, p.ID)
+		_, err := GetRelationProductUserList(id, p.ID)
 
 		if err != nil {
 			//CreateRelationProductUserList(id, p.ID)
-			product := CreateRelationProductUserList(id, p.ID)
+			CreateRelationProductUserList(id, p.ID)
 
-			relations = append(relations, product)
+			pr, _ := GetProductByID(p.ID)
+			relations = append(relations, pr)
 		} else {
-
-			relations = append(relations, result)
+			pr, _ := GetProductByID(p.ID)
+			relations = append(relations, pr)
 		}
 	}
 

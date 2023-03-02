@@ -9,7 +9,7 @@ type Product struct {
 	gorm.Model
 	ID                      string  `sql:"type:uuid;primary_key;"`
 	Name                    string  `validate:"required,min=4,max=15"`
-	Price                   float32 `validate:"required"`
+	Price                   float64 `validate:"required"`
 	Quantity                int     `validate:"required"`
 	MaxQuantityInstallments int     `validate:"required,min=1"`
 	Highlight               bool

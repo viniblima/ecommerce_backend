@@ -51,7 +51,7 @@ func GetAllProducts(page string) map[string]interface{} {
 		l := map[string]interface{}{
 			"ID":                      product.ID,
 			"Name":                    product.Name,
-			"Price":                   product.Price,
+			"Price":                   product.Price + 0.00,
 			"Quantity":                product.Quantity,
 			"MaxQuantityInstallments": product.MaxQuantityInstallments,
 			"Highlight":               product.Highlight,
@@ -63,6 +63,10 @@ func GetAllProducts(page string) map[string]interface{} {
 		}
 
 		list = append(list, l)
+	}
+
+	if list == nil {
+		list = make([]map[string]interface{}, 0)
 	}
 
 	newMap := map[string]interface{}{
