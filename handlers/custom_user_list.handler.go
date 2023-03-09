@@ -63,7 +63,7 @@ func GetMyLists(id string) []map[string]interface{} {
 		var relations []models.CustomUserListProducts
 		database.DB.Db.Where("custom_user_list_id = ?", list[i].ID).Find(&relations)
 
-		var products []models.Product
+		var products []map[string]interface{}
 
 		fmt.Println("len relations")
 		fmt.Println(len(relations))
@@ -72,13 +72,26 @@ func GetMyLists(id string) []map[string]interface{} {
 			product, err := GetProductByID(relations[j].ProductID)
 
 			if err == nil {
-				products = append(products, product)
+				_, errLike := IsProductLiked(id, product.ID)
+
+				m := map[string]interface{}{
+					"ID": product.ID,
+					// "CreatedAt": "2023-02-22T18:40:51.657414Z",
+					// "UpdatedAt": "2023-02-22T18:40:51.657414Z",
+					"Name":                    product.Name,
+					"Price":                   product.Price,
+					"Quantity":                product.Quantity,
+					"MaxQuantityInstallments": product.MaxQuantityInstallments,
+					"Highlight":               product.Highlight,
+					"Like":                    errLike == nil,
+				}
+				products = append(products, m)
 			}
 
 		}
 
 		if products == nil {
-			products = make([]models.Product, 0)
+			products = make([]map[string]interface{}, 0)
 		}
 		local := map[string]interface{}{
 			"CustomUserList": map[string]interface{}{

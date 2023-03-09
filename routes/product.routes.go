@@ -7,9 +7,12 @@ import (
 )
 
 func SetupProductsRoutes(api fiber.Router) {
-	product_routes := api.Group("/products", handlers.VerifyJWT)
+	product_routes := api.Group("/products")
 
 	product_routes.Get("/highlights", controllers.GetHighlights)
 	product_routes.Get("", controllers.GetAllProducts)
-	product_routes.Post("", controllers.CreateProduct)
+	product_routes.Get("/:id", controllers.GetProductByID)
+
+	product_routes.Post("", handlers.VerifyJWT, controllers.CreateProduct)
+
 }
