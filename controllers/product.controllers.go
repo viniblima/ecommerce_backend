@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/viniblima/go_pq/handlers"
 	"github.com/viniblima/go_pq/models"
@@ -139,32 +138,59 @@ func LikedProducts(c *fiber.Ctx) error {
 }
 
 func CreateProduct(c *fiber.Ctx) error {
-	var input models.Product
-	validate := validator.New()
-	product := new(models.Product)
 
-	if err := c.BodyParser(product); err != nil {
+	type Payload struct {
+		Name                    string  `json:"Name" validate:"required"`
+		Price                   float64 `json:"Price" validate:"required"`
+		Quantity                int     `json:"Quantity" validate:"required"`
+		MaxQuantityInstallments int     `json:"MaxQuantityInstallments" validate:"required,min=1"`
+		Highlight               bool    `json:"Highlight"`
+		Categories              []struct {
+			ID string `json:"ID" validate:"required"`
+		} `json:"Categories" validate:"required"`
+	}
+
+	payload := Payload{}
+
+	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}
-	c.BodyParser(&input)
-	var errors []string
+	c.BodyParser(&payload)
 
-	if err := validate.Struct(product); err != nil {
-		validationErrors := err.(validator.ValidationErrors)
-		for _, validationError := range validationErrors {
-			errors = append(errors, validationError.Error())
-		}
-	}
-
+	errors := handlers.ValidatePayload(payload)
 	if len(errors) > 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": errors[0],
 		})
 	}
 
-	handlers.CreateProduct(product)
+	if len(payload.Categories) < 1 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Must have at least 1 category",
+		})
+	}
 
-	return c.Status(201).JSON(product)
+	product := new(models.Product)
+
+	c.BodyParser(&product)
+
+	var ms []map[string]interface{}
+
+	for i := 0; i < len(payload.Categories); i++ {
+		m := map[string]interface{}{
+			"ID": payload.Categories[i].ID,
+		}
+		ms = append(ms, m)
+	}
+
+	p, errP := handlers.CreateProduct(product, ms)
+
+	if errP == nil {
+		return c.Status(201).JSON(p)
+	} else {
+		return c.Status(400).JSON(errP)
+	}
+
 }

@@ -145,6 +145,29 @@ func GetProductByID(id string) (models.Product, error) {
 	return product, err
 }
 
-func CreateProduct(product *models.Product) *gorm.DB {
-	return database.DB.Db.Create(&product)
+func CreateProduct(product *models.Product, categories []map[string]interface{}) (map[string]interface{}, error) {
+
+	var err error
+
+	dbResult := database.DB.Db.Create(&product)
+
+	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
+		err = errors.New("Relation not found")
+	}
+
+	rl := CreateRelationCategoryProduct(categories, product.ID)
+
+	fmt.Println(rl)
+	m := map[string]interface{}{
+		"CreatedAt":               product.CreatedAt,
+		"ID":                      product.ID,
+		"Name":                    product.Name,
+		"Price":                   product.Price,
+		"Quantity":                product.Quantity,
+		"MaxQuantityInstallments": product.MaxQuantityInstallments,
+		"Highlight":               product.Highlight,
+		"Categories":              rl,
+	}
+
+	return m, err
 }
