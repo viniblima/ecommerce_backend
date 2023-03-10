@@ -62,6 +62,7 @@ func GetProductByID(c *fiber.Ctx) error {
 	} else {
 
 		ds, errDs := handlers.GetDiscountbyProductID(result.ID)
+		cs, _ := handlers.GetAllCategoriesOfProduct(result.ID)
 		_, errLike := handlers.IsProductLiked(userID, result.ID)
 
 		m := map[string]interface{}{
@@ -75,12 +76,19 @@ func GetProductByID(c *fiber.Ctx) error {
 			"MaxQuantityInstallments": result.MaxQuantityInstallments,
 			"Highlight":               result.Highlight,
 			"Discount":                ds,
+			"Categories":              cs,
 			"Like":                    errLike == nil,
 		}
 
 		if errDs != nil {
 			m["Discount"] = nil
 		}
+		fmt.Println(">>>>>>")
+		fmt.Println(cs)
+		if len(cs) < 1 {
+			m["Categories"] = make([]models.Category, 0)
+		}
+
 		return c.Status(fiber.StatusOK).JSON(m)
 	}
 
@@ -99,12 +107,24 @@ func GetAllProducts(c *fiber.Ctx) error {
 		}
 		userID = result.ID
 	}
-	// } else {
-	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-	// 		"message": "User not found",
-	// 	})
-	// }
-	products := handlers.GetAllProducts(c.Query("page"), userID)
+	type Payload []struct {
+		ID string `json:"ID" validate:"required"`
+	}
+
+	payload := Payload{}
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	c.BodyParser(&payload)
+
+	var cs []string
+	for i := 0; i < len(payload); i++ {
+		cs = append(cs, payload[i].ID)
+	}
+
+	products := handlers.GetAllProducts(c.Query("page"), userID, cs)
 	return c.Status(fiber.StatusOK).JSON(products)
 }
 
@@ -135,6 +155,48 @@ func LikedProducts(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(ls)
+}
+
+func AddCategoryToProduct(c *fiber.Ctx) error {
+	type Payload struct {
+		Product    string `json:"Product" validate:"required"`
+		Categories []struct {
+			ID string `json:"ID" validate:"required"`
+		}
+	}
+
+	payload := Payload{}
+
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	c.BodyParser(&payload)
+
+	errors := handlers.ValidatePayload(payload)
+	if len(errors) > 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": errors[0],
+		})
+	}
+
+	var ms []map[string]interface{}
+
+	_, errD := handlers.DeleteAllRelationCategoryProduct(payload.Product)
+
+	if errD == nil {
+		for i := 0; i < len(payload.Categories); i++ {
+			handlers.CreateRelationCategoryProduct(payload.Categories[i].ID, payload.Product)
+			c, _ := handlers.GetCategoryByID(payload.Categories[i].ID)
+			ms = append(ms, map[string]interface{}{
+				"Category": c,
+			})
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(ms)
+
 }
 
 func CreateProduct(c *fiber.Ctx) error {

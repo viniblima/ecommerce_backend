@@ -25,6 +25,7 @@ func GetHighlights(userID string) []map[string]interface{} {
 		product := products[i]
 
 		ds, errDs := GetDiscountbyProductID(product.ID)
+		cs, _ := GetAllCategoriesOfProduct(product.ID)
 		_, errLike := IsProductLiked(userID, product.ID)
 
 		l := map[string]interface{}{
@@ -36,10 +37,15 @@ func GetHighlights(userID string) []map[string]interface{} {
 			"Highlight":               product.Highlight,
 			"Like":                    errLike == nil,
 			"Discount":                ds,
+			"Categories":              cs,
 		}
 
 		if errDs != nil {
 			l["Discount"] = nil
+		}
+
+		if len(cs) < 1 {
+			l["Categories"] = make([]map[string]interface{}, 0)
 		}
 
 		list = append(list, l)
@@ -59,7 +65,7 @@ func GetLikedProducts(userID string) []map[string]interface{} {
 		like := likes[i]
 
 		p, _ := GetProductByID(like.ProductID)
-
+		cs, _ := GetAllCategoriesOfProduct(like.ProductID)
 		ds, errDs := GetDiscountbyProductID(p.ID)
 
 		m := map[string]interface{}{
@@ -70,10 +76,15 @@ func GetLikedProducts(userID string) []map[string]interface{} {
 			"Quantity":                p.Quantity,
 			"MaxQuantityInstallments": p.MaxQuantityInstallments,
 			"Highlight":               p.Highlight,
+			"Categories":              cs,
 		}
 
 		if errDs != nil {
 			m["Discount"] = nil
+		}
+
+		if len(cs) < 1 {
+			m["Categories"] = make([]map[string]interface{}, 0)
 		}
 
 		list = append(list, m)
@@ -81,7 +92,7 @@ func GetLikedProducts(userID string) []map[string]interface{} {
 	return list
 }
 
-func GetAllProducts(page string, userID string) map[string]interface{} {
+func GetAllProducts(page string, userID string, categories []string) map[string]interface{} {
 	var products []models.Product
 
 	if page == "" {
@@ -95,13 +106,31 @@ func GetAllProducts(page string, userID string) map[string]interface{} {
 	if errOffeset == nil {
 		offset = (int - 1) * offset
 	}
+	if len(categories) > 0 {
+		var ids []string
+		for i := 0; i < len(categories); i++ {
+			c, _ := GetCategoryByID(categories[i])
+			rls, errRLS := GetRelationByCategoryID(c.ID)
 
-	database.DB.Db.Offset(offset).Limit(limit).Find(&products)
+			if errRLS == nil {
+				for j := 0; j < len(rls); j++ {
+					ids = append(ids, rls[j].ProductID)
+				}
+
+			}
+		}
+
+		database.DB.Db.Offset(offset).Limit(limit).Where("id in ?", ids).Find(&products)
+	} else {
+		database.DB.Db.Offset(offset).Limit(limit).Find(&products)
+	}
+
 	var list []map[string]interface{}
 	for i := 0; i < len(products); i++ {
 		product := products[i]
 
 		ds, errDs := GetDiscountbyProductID(product.ID)
+		cs, _ := GetAllCategoriesOfProduct(product.ID)
 		_, errLike := IsProductLiked(userID, product.ID)
 
 		l := map[string]interface{}{
@@ -113,10 +142,15 @@ func GetAllProducts(page string, userID string) map[string]interface{} {
 			"Highlight":               product.Highlight,
 			"Like":                    errLike == nil,
 			"Discount":                ds,
+			"Categories":              cs,
 		}
 
 		if errDs != nil {
 			l["Discount"] = nil
+		}
+
+		if len(cs) < 1 {
+			l["Categories"] = make([]map[string]interface{}, 0)
 		}
 
 		list = append(list, l)
@@ -155,9 +189,8 @@ func CreateProduct(product *models.Product, categories []map[string]interface{})
 		err = errors.New("Relation not found")
 	}
 
-	rl := CreateRelationCategoryProduct(categories, product.ID)
+	rl := CreateListRelationCategoryProduct(categories, product.ID)
 
-	fmt.Println(rl)
 	m := map[string]interface{}{
 		"CreatedAt":               product.CreatedAt,
 		"ID":                      product.ID,
