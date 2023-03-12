@@ -204,3 +204,10 @@ func CreateProduct(product *models.Product, categories []map[string]interface{})
 
 	return m, err
 }
+
+func UpdateProduct(p models.Product) models.Product {
+
+	database.DB.Db.Save(&p)
+
+	return p
+}

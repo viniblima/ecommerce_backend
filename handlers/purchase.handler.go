@@ -1,21 +1,16 @@
 package handlers
 
 import (
+	"errors"
 	"os"
 
 	"github.com/viniblima/go_pq/cielo"
 	"github.com/viniblima/go_pq/database"
 	"github.com/viniblima/go_pq/models"
+	"gorm.io/gorm"
 )
 
-func IntegratePurchase(
-	u models.User,
-	p models.PaymentMethod,
-	c models.Card,
-	save bool,
-	i uint32,
-	amount uint32,
-) (*cielo.Sale, error) {
+func IntegratePurchase(u models.User, p models.PaymentMethod, c models.Card, save bool, i uint32, amount uint32) (models.Purchase, error) {
 	var e error
 	CieloClient, err := cielo.NewClient(os.Getenv("MERCHANT_ID"), os.Getenv("MERCHANT_KEY"), cielo.SandboxEnvironment)
 	if err != nil {
@@ -39,13 +34,7 @@ func IntegratePurchase(
 		e = err
 	}
 
-	purchase := new(models.Purchase)
-
-	purchase.UserID = u.ID
-
-	purchase.PaymentMethod = p
-
-	database.DB.Db.Create(&purchase)
+	purchase := CreatePurchase(u.ID, p)
 
 	if p == models.CreditCard {
 		sale := cielo.Sale{
@@ -67,12 +56,18 @@ func IntegratePurchase(
 			},
 		}
 
-		resp, err := CieloClient.Authorization(&sale)
+		_, err := CieloClient.Authorization(&sale)
 		if err != nil {
 			e = err
+		} else {
+			newPurchase, _ := GetPurchaseByID(purchase.ID)
+
+			newPurchase.Success = true
+			UpdatePurchase(newPurchase)
 		}
 
-		return resp, e
+		purchase, _ := GetPurchaseByID(purchase.ID)
+		return purchase, e
 	} else {
 		sale := cielo.Sale{
 			MerchantOrderID: purchase.ID,
@@ -87,14 +82,116 @@ func IntegratePurchase(
 			},
 		}
 
-		resp, err := CieloClient.Authorization(&sale)
+		_, err := CieloClient.Authorization(&sale)
 		if err != nil {
 			e = err
+		} else {
+			newPurchase, _ := GetPurchaseByID(purchase.ID)
+
+			newPurchase.Success = true
+			UpdatePurchase(newPurchase)
 		}
 
-		return resp, e
+		purchase, _ := GetPurchaseByID(purchase.ID)
+		return purchase, e
+	}
+}
+
+func GetMyPurchases(id string) []map[string]interface{} {
+	var ps []models.Purchase
+
+	var result []map[string]interface{}
+	database.DB.Db.Where("user_id = ?", id).Find(&ps)
+
+	for i := 0; i < len(ps); i++ {
+		p := ps[i]
+
+		r := map[string]interface{}{
+			"CreatedAt": p.CreatedAt,
+		}
+		var rl []models.PurchaseProduct
+
+		database.DB.Db.Where("purchase_id = ?", p.ID).Find(&rl)
+
+		var prl []map[string]interface{}
+
+		for j := 0; j < len(rl); j++ {
+			product, _ := GetProductByID(rl[j].ProductID)
+			ds, errDs := GetDiscountbyProductID(product.ID)
+			cs, _ := GetAllCategoriesOfProduct(product.ID)
+			_, errLike := IsProductLiked(id, product.ID)
+			m := map[string]interface{}{
+				"Highlight":               product.Highlight,
+				"ID":                      product.ID,
+				"Like":                    errLike == nil,
+				"MaxQuantityInstallments": product.MaxQuantityInstallments,
+				"Name":                    product.Name,
+				"Price":                   product.Price,
+				"Quantity":                product.Quantity,
+				"Discount":                ds,
+				"Categories":              cs,
+			}
+			if errDs != nil {
+				m["Discount"] = nil
+			}
+			if len(cs) < 1 {
+				m["Categories"] = make([]models.Category, 0)
+			}
+			prl = append(prl, m)
+		}
+
+		r["Products"] = prl
+
+		if len(prl) < 1 {
+			r["Products"] = make([]map[string]interface{}, 0)
+		}
+
+		result = append(result, r)
+	}
+	return result
+}
+
+func CreatePurchase(userID string, m models.PaymentMethod) models.Purchase {
+	var purchase models.Purchase
+
+	purchase.UserID = userID
+
+	purchase.PaymentMethod = m
+
+	database.DB.Db.Create(&purchase)
+
+	return purchase
+}
+
+func UpdatePurchase(p models.Purchase) models.Purchase {
+	database.DB.Db.Save(&p)
+
+	return p
+}
+
+func GetPurchaseByID(id string) (models.Purchase, error) {
+	var purchase models.Purchase
+
+	var err error
+
+	dbResult := database.DB.Db.Where("ID = ?", id).First(&purchase)
+
+	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
+		err = errors.New("Purchase not found")
 	}
 
+	return purchase, err
+}
+
+func CreateRelationProductPurchase(purchaseID string, productID string) models.PurchaseProduct {
+	var rl models.PurchaseProduct
+
+	rl.PurchaseID = purchaseID
+	rl.ProductID = productID
+
+	database.DB.Db.Create(&rl)
+
+	return rl
 }
 
 /*

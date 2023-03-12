@@ -52,6 +52,7 @@ func ConnectDb() {
 		&models.Purchase{},
 		&models.Like{},
 		&models.CategoryProduct{},
+		&models.PurchaseProduct{},
 	)
 
 	DB = Dbinstance{

@@ -65,8 +65,6 @@ func GetMyLists(id string) []map[string]interface{} {
 
 		var products []map[string]interface{}
 
-		fmt.Println("len relations")
-		fmt.Println(len(relations))
 		for j := 0; j < len(relations); j++ {
 
 			product, err := GetProductByID(relations[j].ProductID)

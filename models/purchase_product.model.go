@@ -8,7 +8,8 @@ import (
 type PurchaseProduct struct {
 	gorm.Model
 	ID         string `sql:"type:uuid;primary_key;"`
-	PurchaseID string `validate:"required"`
+	PurchaseID string `gorm:"foreignKey: PurchaseID" validate:"required"`
+	ProductID  string `gorm:"foreignKey: ProductID" validate:"required"`
 }
 
 func (p *PurchaseProduct) BeforeCreate(db *gorm.DB) (err error) {

@@ -10,4 +10,5 @@ func SetupPurchaseRoutes(api fiber.Router) {
 	purchase_routes := api.Group("/purchase", handlers.VerifyJWT)
 
 	purchase_routes.Post("/", controllers.MakePurchase)
+	purchase_routes.Get("/", controllers.GetMyPurchases)
 }

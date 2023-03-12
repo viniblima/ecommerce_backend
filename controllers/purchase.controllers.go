@@ -34,7 +34,8 @@ func MakePurchase(c *fiber.Ctx) error {
 			Installments uint32 `json:"Installments" validate:"required"`
 		} `json:"PaymentMethod" validate:"required"`
 		ProductsPayload []struct {
-			ID string `json:"ID" validate:"required"`
+			ID       string `json:"ID" validate:"required"`
+			Quantity uint32 `json:"Quantity" validate:"required"`
 		} `json:"Products" validate:"required"`
 	}
 
@@ -60,12 +61,13 @@ func MakePurchase(c *fiber.Ctx) error {
 	amount := 0
 
 	for i := 0; i < len(payload.ProductsPayload); i++ {
-		id := payload.ProductsPayload[i].ID
+		pl := payload.ProductsPayload[i]
+		//id := payload.ProductsPayload[i].ID
 
-		p, err := handlers.GetProductByID(id)
+		p, err := handlers.GetProductByID(pl.ID)
 
-		if err != nil || p.Quantity < 1 {
-			errors = append(errors, "Product not found or unavailable")
+		if err != nil || (p.Quantity-int(pl.Quantity)) < 0 {
+			errors = append(errors, "Product not found or unavailable in this quantity")
 		} else {
 			ps = append(ps, p)
 
@@ -94,7 +96,7 @@ func MakePurchase(c *fiber.Ctx) error {
 		Brand:          "mastercard",
 	}
 
-	purchase, err := handlers.IntegratePurchase(user, models.Pix, card, false, payload.PaymentMethodPayload.Installments, uint32(amount))
+	purchase, err := handlers.IntegratePurchase(user, models.CreditCard, card, false, payload.PaymentMethodPayload.Installments, uint32(amount))
 
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -103,6 +105,37 @@ func MakePurchase(c *fiber.Ctx) error {
 	}
 
 	fmt.Println(purchase)
+	for i := 0; i < len(payload.ProductsPayload); i++ {
+		pl := payload.ProductsPayload[i]
+		p, _ := handlers.GetProductByID(pl.ID)
+		p.Quantity -= int(pl.Quantity)
+		handlers.CreateRelationProductPurchase(purchase.ID, pl.ID)
+		handlers.UpdateProduct(p)
+	}
 
-	return c.Status(200).JSON(fiber.Map{"message": purchase})
+	return c.Status(200).JSON(purchase)
+}
+
+func GetMyPurchases(c *fiber.Ctx) error {
+	var user models.User
+
+	if str, ok := c.Locals("userID").(string); ok {
+
+		result, err := handlers.GetUserByID(str)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "User not found",
+			})
+		}
+		user = result
+
+	} else {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "User not found",
+		})
+	}
+
+	result := handlers.GetMyPurchases(user.ID)
+
+	return c.Status(200).JSON(result)
 }

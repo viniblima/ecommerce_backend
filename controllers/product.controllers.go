@@ -83,8 +83,6 @@ func GetProductByID(c *fiber.Ctx) error {
 		if errDs != nil {
 			m["Discount"] = nil
 		}
-		fmt.Println(">>>>>>")
-		fmt.Println(cs)
 		if len(cs) < 1 {
 			m["Categories"] = make([]models.Category, 0)
 		}
@@ -107,8 +105,10 @@ func GetAllProducts(c *fiber.Ctx) error {
 		}
 		userID = result.ID
 	}
-	type Payload []struct {
-		ID string `json:"ID" validate:"required"`
+	type Payload struct {
+		Categories []struct {
+			ID string `json:"ID" validate:"required"`
+		}
 	}
 
 	payload := Payload{}
@@ -120,8 +120,8 @@ func GetAllProducts(c *fiber.Ctx) error {
 	c.BodyParser(&payload)
 
 	var cs []string
-	for i := 0; i < len(payload); i++ {
-		cs = append(cs, payload[i].ID)
+	for i := 0; i < len(payload.Categories); i++ {
+		cs = append(cs, payload.Categories[i].ID)
 	}
 
 	products := handlers.GetAllProducts(c.Query("page"), userID, cs)
