@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"os"
+	"strconv"
 
 	"github.com/viniblima/go_pq/cielo"
 	"github.com/viniblima/go_pq/database"
@@ -97,17 +98,31 @@ func IntegratePurchase(u models.User, p models.PaymentMethod, c models.Card, sav
 	}
 }
 
-func GetMyPurchases(id string) []map[string]interface{} {
+func GetMyPurchases(id string, page string) map[string]interface{} {
 	var ps []models.Purchase
 
+	if page == "" {
+		page = "1"
+	}
+	offset := 10
+	limit := 10
+
+	int, errOffeset := strconv.Atoi(page)
+
+	if errOffeset == nil {
+		offset = (int - 1) * offset
+	}
+
 	var result []map[string]interface{}
-	database.DB.Db.Where("user_id = ?", id).Find(&ps)
+	database.DB.Db.Offset(offset).Limit(limit).Where("user_id = ?", id).Find(&ps)
 
 	for i := 0; i < len(ps); i++ {
 		p := ps[i]
 
 		r := map[string]interface{}{
 			"CreatedAt": p.CreatedAt,
+			"ID":        p.ID,
+			"Success":   p.Success,
 		}
 		var rl []models.PurchaseProduct
 
@@ -131,24 +146,40 @@ func GetMyPurchases(id string) []map[string]interface{} {
 				"Discount":                ds,
 				"Categories":              cs,
 			}
+
 			if errDs != nil {
 				m["Discount"] = nil
 			}
 			if len(cs) < 1 {
 				m["Categories"] = make([]models.Category, 0)
 			}
-			prl = append(prl, m)
+
+			purchaseProduct := map[string]interface{}{
+				"Product": m,
+				"Status":  rl[j].Status,
+				"ID":      rl[j].PurchaseID,
+			}
+			prl = append(prl, purchaseProduct)
 		}
 
-		r["Products"] = prl
+		r["PurchaseProducts"] = prl
 
 		if len(prl) < 1 {
-			r["Products"] = make([]map[string]interface{}, 0)
+			r["PurchaseProducts"] = make([]map[string]interface{}, 0)
 		}
 
 		result = append(result, r)
 	}
-	return result
+	newMap := map[string]interface{}{
+		"End":       len(result) < 10,
+		"Purchases": result,
+	}
+
+	if len(result) < 1 {
+		newMap["Purchases"] = make([]map[string]interface{}, 0)
+	}
+
+	return newMap
 }
 
 func CreatePurchase(userID string, m models.PaymentMethod) models.Purchase {

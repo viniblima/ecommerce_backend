@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/viniblima/go_pq/handlers"
 	"github.com/viniblima/go_pq/models"
@@ -129,7 +127,7 @@ func GetAllProducts(c *fiber.Ctx) error {
 }
 
 func LikedProducts(c *fiber.Ctx) error {
-	fmt.Println("Teste 123123")
+
 	var userID string
 
 	if str, ok := c.Locals("userID").(string); ok {

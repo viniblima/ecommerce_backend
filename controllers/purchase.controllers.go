@@ -30,7 +30,7 @@ func MakePurchase(c *fiber.Ctx) error {
 
 	type Payload struct {
 		PaymentMethodPayload struct {
-			Name         string `json:"Name" validate:"required"`
+			Name         uint32 `json:"Name" validate:"required"`
 			Installments uint32 `json:"Installments" validate:"required"`
 		} `json:"PaymentMethod" validate:"required"`
 		ProductsPayload []struct {
@@ -135,7 +135,7 @@ func GetMyPurchases(c *fiber.Ctx) error {
 		})
 	}
 
-	result := handlers.GetMyPurchases(user.ID)
+	result := handlers.GetMyPurchases(user.ID, c.Query("page"))
 
 	return c.Status(200).JSON(result)
 }
