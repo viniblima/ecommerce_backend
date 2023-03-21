@@ -8,6 +8,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/viniblima/go_pq/database"
+	"github.com/viniblima/go_pq/models"
 )
 
 type TokenClaims struct {
@@ -138,5 +140,60 @@ func VerifyJWT(c *fiber.Ctx) error {
 	}
 
 	c.Locals("userID", claims["id"])
+	return c.Next()
+}
+
+func VerifyJWTAdmin(c *fiber.Ctx) error {
+	auth := c.GetReqHeaders()["Authorization"]
+	claims := jwt.MapClaims{}
+	if auth != "" {
+		split := strings.Split(auth, "JWT ")
+
+		if len(split) < 2 {
+			return c.Status(401).JSON(fiber.Map{
+				"erro": "Invalid tag",
+			})
+		}
+
+		_, err := jwt.ParseWithClaims(strings.Split(auth, "JWT ")[1], claims, func(token *jwt.Token) (interface{}, error) {
+			_, ok := token.Method.(*jwt.SigningMethodECDSA)
+			if !ok {
+				fmt.Println("unauthorized")
+			}
+			return []byte(os.Getenv("PASSWORD_SECRET")), nil
+		})
+
+		if claims["sub"] != "auth" {
+			return c.Status(401).JSON(fiber.Map{
+				"erro": "Invalid token",
+			})
+		}
+
+		if err != nil {
+			return c.Status(401).JSON(fiber.Map{
+				"erro": err.Error(),
+			})
+
+		}
+
+	} else {
+		return c.SendStatus(401)
+	}
+
+	c.Locals("userID", claims["id"])
+	return c.Next()
+}
+
+func FirstAccess(c *fiber.Ctx) error {
+	var users []models.User
+
+	database.DB.Db.Where("is_admin = ?", true).Find(&users)
+
+	fmt.Println(users)
+	if len(users) > 0 {
+		return c.Status(401).JSON(fiber.Map{"message": "User adm already created"})
+	}
+
+	c.Locals("firstAccess", "true")
 	return c.Next()
 }

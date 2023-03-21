@@ -37,9 +37,16 @@ func (u *User) FindUserByEmail(email string) (*User, error) {
 	return u, err
 }
 
-func GetByEmail(email string) *gorm.DB {
+func GetByEmail(email string, admin bool) (models.User, error) {
 	item := models.User{}
-	return database.DB.Db.Where("email = ?", email).First(item)
+	var err error
+	dbResult := database.DB.Db.Where("email = ?", email).First(&item)
+
+	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
+		err = errors.New("user not found")
+	}
+
+	return item, err
 }
 
 func GetUserByID(id string) (models.User, error) {

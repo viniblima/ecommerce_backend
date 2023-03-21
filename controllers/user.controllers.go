@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -24,13 +25,18 @@ func SignIn(c *fiber.Ctx) error {
 	var user models.User
 	input.Email = util.NormalizeEmail(input.Email)
 
-	error := database.DB.Db.Where("email = ?", input.Email).First(&user).Error
+	u, errorU := handlers.GetByEmail(input.Email, false)
+
+	user = u
+
+	fmt.Println(user.IsAdmin)
+	fmt.Println(errorU)
 
 	password := input.Password
 
 	checked := handlers.CheckHash(user.Password, password)
 
-	if error != nil || !checked {
+	if errorU != nil || !checked {
 		return c.Status(401).SendString("Email or password wrong")
 	}
 
@@ -39,13 +45,55 @@ func SignIn(c *fiber.Ctx) error {
 	if err != nil {
 		return c.SendStatus(fiber.StatusForbidden)
 	}
-	// c.Cookie(&fiber.Cookie{
-	// 	Name:     "jwt",
-	// 	Value:    s,
-	// 	Expires:  time.Now().Add(7 * 24 * time.Hour),
-	// 	HTTPOnly: true,
-	// 	SameSite: "lax",
-	// })
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"Auth": s,
+		"User": fiber.Map{
+			"ID":        user.ID,
+			"CreatedAt": user.CreatedAt,
+			"UpdatedAt": user.UpdatedAt,
+			"Name":      user.Name,
+			"Email":     user.Email,
+		},
+	})
+}
+
+func SignInPortal(c *fiber.Ctx) error {
+	var input models.User
+
+	err := c.BodyParser(&input)
+	if err != nil {
+		return c.
+			Status(http.StatusUnprocessableEntity).
+			JSON(util.NewJError(err))
+	}
+
+	var user models.User
+	input.Email = util.NormalizeEmail(input.Email)
+
+	u, errorU := handlers.GetByEmail(input.Email, true)
+
+	user = u
+
+	fmt.Println(user.IsAdmin == false)
+
+	password := input.Password
+
+	checked := handlers.CheckHash(user.Password, password)
+
+	if errorU != nil || !checked {
+		return c.Status(401).JSON(fiber.Map{"message": "Email or password wrong"})
+	}
+
+	if !user.IsAdmin {
+		return c.Status(401).JSON(fiber.Map{"message": "User is not an admin"})
+	}
+
+	s, err := handlers.GenerateJWT(user.ID)
+
+	if err != nil {
+		return c.SendStatus(fiber.StatusForbidden)
+	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"Auth": s,
@@ -95,6 +143,13 @@ func SignUp(c *fiber.Ctx) error {
 
 	user.Password = hashed
 
+	user.IsAdmin = false
+
+	if str, ok := c.Locals("firstAccess").(string); ok {
+		fmt.Println(str)
+		user.IsAdmin = true
+	}
+
 	database.DB.Db.Create(&user)
 
 	s, err := handlers.GenerateJWT(user.ID)
@@ -111,6 +166,7 @@ func SignUp(c *fiber.Ctx) error {
 			"UpdatedAt": user.UpdatedAt,
 			"Name":      user.Name,
 			"Email":     user.Email,
+			"IsAdmin":   user.IsAdmin,
 		},
 	}
 
